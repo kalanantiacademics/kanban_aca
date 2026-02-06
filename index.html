@@ -482,9 +482,39 @@
                 </button>
             </form>
         </div>
+    <!-- Evidence Modal -->
+    <div id="evidenceModal" class="fixed inset-0 z-[60] hidden">
+        <div class="absolute inset-0 bg-gray-900/40 backdrop-blur-sm transition-opacity" onclick="toggleEvidenceModal()"></div>
+        <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-md">
+            <div class="bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden animate-slideUp">
+                <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                    <h3 class="text-xl font-bold text-gray-800">Submit Evidence</h3>
+                    <button onclick="toggleEvidenceModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+                
+                <form id="evidenceForm" onsubmit="submitEvidence(event)">
+                    <input type="hidden" id="evidenceTaskId">
+                    <div class="p-6 space-y-4">
+                        <p class="text-sm text-gray-500">Please provide proof of completion (Link or Text) to move this task to Review.</p>
+                        <div>
+                            <label for="evidenceInput" class="text-xs font-bold text-gray-500 uppercase tracking-wide">Evidence / Link</label>
+                            <input type="text" id="evidenceInput" required class="mt-2 w-full px-4 py-3 rounded-xl bg-gray-50 border-gray-200 focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium text-gray-800 placeholder-gray-400" placeholder="https://docs.google.com/...">
+                        </div>
+                    </div>
+                    
+                    <div class="p-6 border-t border-gray-100 bg-gray-50/50 flex justify-end gap-3">
+                        <button type="button" onclick="toggleEvidenceModal()" class="px-6 py-2.5 rounded-xl border border-gray-200 text-gray-600 font-semibold hover:bg-gray-100 transition-all">Cancel</button>
+                        <button type="submit" class="px-6 py-2.5 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700 shadow-lg shadow-blue-500/30 transition-all transform active:scale-95">Submit & Move</button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
 
-    <script>
         // --- API CONFIGURATION ---
         const API_URL = 'https://script.google.com/macros/s/AKfycbwbVOGWF7uVnhTxtKPDcPP3uqDq3vmbaPnZDCxCam3JJQ7b5-HljdHCOxvkBQj3jVo9_A/exec';
 
@@ -1092,15 +1122,90 @@
             });
         }
 
+        // --- Status Transitions ---
         function toggleComplete(id) {
             const task = tasks.find(t => t.id === id);
-            if(task) {
-                // If it's already complete, move to review? Or previous state? 
-                // Simple logic: Toggle betwen 'complete' and 'todo' (or keep current if simply checking box visual, but user wants column move)
-                // Let's make the checkbox move it to 'Complete' column immediately
-                task.status = task.status === 'complete' ? 'backlog' : 'complete';
+            if (!task) return;
+
+            // Logic:
+            // Backlog -> (Blocked, need Approval)
+            // To Do -> Progress
+            // Progress -> Review (Need Evidence)
+            // Review -> Complete
+            // Complete -> To Do (Reopen?)
+
+            if (task.status === 'backlog') {
+                alert('Task in Backlog needs Team Lead approval via checkbox.');
+                return;
+            }
+
+            if (task.status === 'todo') {
+                // To Do -> Progress
+                updateTaskStatus(id, 'progress');
+            } else if (task.status === 'progress') {
+                // Progress -> Review (Require Evidence)
+                openEvidenceModal(id);
+            } else if (task.status === 'review') {
+                // Review -> Complete
+                updateTaskStatus(id, 'complete');
+            } else if (task.status === 'complete') {
+                 // Reopen?
+                 if(confirm("Reopen this task to To Do?")) {
+                    updateTaskStatus(id, 'todo');
+                 }
+            }
+        }
+
+        async function updateTaskStatus(id, newStatus, evidence = '') {
+            const task = tasks.find(t => t.id === id);
+            if(!task) return;
+
+            // Optimistic Update
+            const oldStatus = task.status;
+            task.status = newStatus;
+            renderBoard();
+
+            try {
+                if (API_URL !== 'YOUR_WEB_APP_URL_HERE') {
+                    const res = await fetchFromGas('updateStatus', { 
+                        id: id, 
+                        status: newStatus,
+                        evidence: evidence
+                    }, 'POST');
+                    
+                    if (!res.success) throw new Error(res.error);
+                }
+            } catch (err) {
+                console.error("Update Failed", err);
+                alert("Failed to update status. Reverting...");
+                task.status = oldStatus;
                 renderBoard();
             }
+        }
+
+        // --- Evidence Logic ---
+        function toggleEvidenceModal() {
+            const el = document.getElementById('evidenceModal');
+            el.classList.toggle('hidden');
+            if(!el.classList.contains('hidden')) {
+                document.getElementById('evidenceInput').focus();
+            }
+        }
+
+        function openEvidenceModal(taskId) {
+            document.getElementById('evidenceTaskId').value = taskId;
+            document.getElementById('evidenceInput').value = '';
+            toggleEvidenceModal();
+        }
+
+        function submitEvidence(e) {
+            e.preventDefault();
+            const id = document.getElementById('evidenceTaskId').value;
+            const evidence = document.getElementById('evidenceInput').value;
+            
+            toggleEvidenceModal();
+            // Move to Review with Evidence
+            updateTaskStatus(id, 'review', evidence);
         }
         
         function deleteTask(e, id) {
