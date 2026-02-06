@@ -517,10 +517,12 @@
 
     <script>
         // --- API CONFIGURATION ---
-        const API_URL = 'https://script.google.com/macros/s/AKfycbwbVOGWF7uVnhTxtKPDcPP3uqDq3vmbaPnZDCxCam3JJQ7b5-HljdHCOxvkBQj3jVo9_A/exec';
+        const API_URL = '<?= apiUrl ?>';
+        const API_URL_FALLBACK = 'https://script.google.com/macros/s/AKfycbwbVOGWF7uVnhTxtKPDcPP3uqDq3vmbaPnZDCxCam3JJQ7b5-HljdHCOxvkBQj3jVo9_A/exec';
+        const EFFECTIVE_API_URL = (API_URL && API_URL.trim()) ? API_URL : API_URL_FALLBACK;
 
         async function fetchFromGas(action, params = {}, method = 'GET') {
-            const url = new URL(API_URL);
+            const url = new URL(EFFECTIVE_API_URL);
             url.searchParams.append('action', action);
             Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
 
