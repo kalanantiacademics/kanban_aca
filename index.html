@@ -523,6 +523,7 @@
 
         // Logic: If template is not replaced (still contains '<?'), use Fallback
         const EFFECTIVE_API_URL = (!API_URL_TEMPLATE.includes('<?')) ? API_URL_TEMPLATE : API_URL_FALLBACK;
+        const API_URL = EFFECTIVE_API_URL; // Alias for backward compatibility
 
         async function fetchFromGas(action, params = {}, method = 'GET') {
             const url = new URL(EFFECTIVE_API_URL);
