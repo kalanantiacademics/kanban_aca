@@ -814,10 +814,7 @@
         }
 
         // --- Init ---
-        function renderBoard() {
-            // Clear cols
-            Object.values(columns).forEach(col => col.innerHTML = '');
-            
+
         function populateWeekFilter() {
             const filterEl = document.getElementById('weekFilter');
             if(!filterEl) return;
