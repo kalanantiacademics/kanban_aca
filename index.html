@@ -543,6 +543,11 @@
             document.getElementById('dash-welcome').innerText = `Welcome back, ${user.name || 'Friend'}!`;
             document.getElementById('dash-role').innerText = user.role || 'Member';
             
+            // Set Current Date
+            const now = new Date();
+            const options = { year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('current-date').innerText = now.toLocaleDateString('en-US', options);
+
             // Render Calendar
             renderCalendar();
 
@@ -582,11 +587,19 @@
         function renderCalendar() {
             const grid = document.getElementById('mini-calendar-grid');
             grid.innerHTML = '';
-            const daysInMonth = 31; // Static for demo
+            
+            const now = new Date();
+            const currentYear = now.getFullYear();
+            const currentMonth = now.getMonth();
+            const today = now.getDate();
+
+            // Get days in current month
+            const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
             
             for(let i=1; i<=daysInMonth; i++) {
                 const day = document.createElement('div');
-                day.className = `p-2 rounded-lg text-sm cursor-pointer hover:bg-gray-100 transition-colors ${i === 24 ? 'bg-blue-600 text-white font-bold hover:bg-blue-700' : ''}`;
+                const isToday = i === today;
+                day.className = `p-2 rounded-lg text-sm cursor-pointer hover:bg-gray-100 transition-colors ${isToday ? 'bg-blue-600 text-white font-bold hover:bg-blue-700' : ''}`;
                 day.innerText = i;
                 grid.appendChild(day);
             }
