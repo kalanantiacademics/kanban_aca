@@ -599,7 +599,10 @@
             if (session) {
                 const user = JSON.parse(session);
                 console.log('Logged in as:', user.name);
+                console.log('Logged in as:', user.name);
+                loginOverlay.style.display = 'none'; // Force hide
                 loginOverlay.classList.add('hidden');
+                loginOverlay.classList.remove('flex'); // Remove flex conflict
                 
                 // Show Team Section if Lead
                 const teamSection = document.getElementById('team-section');
@@ -616,6 +619,8 @@
                 loadData(); // Load board data
             } else {
                 loginOverlay.classList.remove('hidden');
+                loginOverlay.classList.add('flex'); // Restore flex
+                loginOverlay.style.display = ''; // Clear inline style
             }
         }
 
