@@ -787,23 +787,70 @@
             // Clear cols
             Object.values(columns).forEach(col => col.innerHTML = '');
             
-            const filter = document.getElementById('weekFilter').value;
+        function populateWeekFilter() {
+            const filterEl = document.getElementById('weekFilter');
+            if(!filterEl) return;
+            
+            const uniquePeriods = [...new Set(tasks.map(t => t.period).filter(p => p && p !== 'Uncategorized'))];
+            const currentVal = filterEl.value;
+            
+            filterEl.innerHTML = `
+                <option value="all">All Tasks</option>
+                <optgroup label="Smart Filters">
+                    <option value="this_week">Current Cycle (Tue-Tue)</option>
+                    <option value="next_week">Next Cycle</option>
+                </optgroup>
+            `;
+            
+            if (uniquePeriods.length > 0) {
+                const group = document.createElement('optgroup');
+                group.label = "By Spreadsheet Week";
+                uniquePeriods.forEach(p => {
+                    const opt = document.createElement('option');
+                    opt.value = p;
+                    opt.innerText = p;
+                    group.appendChild(opt);
+                });
+                filterEl.appendChild(group);
+            }
+            
+            if ([...filterEl.options].some(o => o.value === currentVal)) {
+                filterEl.value = currentVal;
+            } else {
+                filterEl.value = 'all'; 
+            }
+        }
+
+        let isFilterPopulated = false;
+
+        function renderBoard() {
+             // Populate Filters unique to data
+            if (!isFilterPopulated && tasks.length > 0) {
+                populateWeekFilter();
+                isFilterPopulated = true;
+            }
+
+            // Clear cols
+            Object.values(columns).forEach(col => col.innerHTML = '');
+            
+            const filterEl = document.getElementById('weekFilter');
+            const filter = filterEl ? filterEl.value : 'all'; 
             
             // Render Tasks
             tasks.forEach(task => {
                 // Filter Logic
                 let visible = true;
-                if (filter === 'this_week') {
+                
+                if (filter === 'all') {
+                    visible = true;
+                } else if (filter === 'this_week') {
                     visible = isDateInCycle(task.date, 0);
                 } else if (filter === 'next_week') {
                     visible = isDateInCycle(task.date, 1);
+                } else {
+                    // Period Filter
+                    visible = task.period === filter;
                 }
-                
-                // Allow "Ongoing" or Active status to bypass filter? 
-                // User: "backlog akan dimulai per week". Active tasks usually persist until done.
-                // Let's assume Active tasks (non-backlog) should probably stick around?
-                // But user wants "Weekly Prioritization".
-                // Let's stick to strict date filtering for now, or ensure tasks have updated dates.
                 
                 if (visible) {
                     const card = createTaskElement(task);
