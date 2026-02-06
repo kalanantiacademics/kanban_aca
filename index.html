@@ -394,14 +394,15 @@
                         <!-- Tag & Date -->
                         <div class="grid grid-cols-2 gap-4">
                             <div>
-                                <label for="taskTag" class="text-xs font-bold text-gray-500 uppercase tracking-wide">Tag</label>
+                                <label for="taskTag" class="text-xs font-bold text-gray-500 uppercase tracking-wide">Category</label>
                                 <select id="taskTag" class="mt-2 w-full px-4 py-3 rounded-xl bg-gray-50 border-gray-200 focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium text-gray-600">
-                                    <option value="Design">Design</option>
-                                    <option value="Development">Development</option>
-                                    <option value="Research">Research</option>
-                                    <option value="Marketing">Marketing</option>
-                                    <option value="Important Tasks">Important Tasks</option>
-                                    <option value="Work">Work</option>
+                                    <option value="UOB">UOB</option>
+                                    <option value="MDS">MDS</option>
+                                    <option value="B2C">B2C</option>
+                                    <option value="B2B">B2B</option>
+                                    <option value="B2S">B2S</option>
+                                    <option value="B2G">B2G</option>
+                                    <option value="Other">Other</option>
                                 </select>
                             </div>
                             <div>
@@ -733,19 +734,72 @@
         };
         const taskModal = document.getElementById('taskModal');
 
+        // --- Date Helpers ---
+        function getCycleRange(offsetWeeks = 0) {
+            const now = new Date();
+            const day = now.getDay(); // 0-6 (Sun-Sat)
+            const hour = now.getHours();
+            
+            // Find "Current Cycle Start" (Most recent Tuesday 1PM)
+            // Tuesday is 2.
+            let daysSinceTuesday = day - 2;
+            if (daysSinceTuesday < 0) daysSinceTuesday += 7;
+            
+            // If it's Tuesday but before 13:00, we satisfy the condition of "Previous Cycle" effectively, 
+            // so we go back 7 days.
+            if (day === 2 && hour < 13) {
+                 daysSinceTuesday = 7;
+            }
+
+            const start = new Date(now);
+            start.setDate(now.getDate() - daysSinceTuesday + (offsetWeeks * 7));
+            start.setHours(13, 0, 0, 0); // Tuesday 1 PM
+            
+            const end = new Date(start);
+            end.setDate(start.getDate() + 7); // Next Tuesday 1 PM
+            
+            return { start, end };
+        }
+
+        function isDateInCycle(dateStr, offset = 0) {
+            if (!dateStr || dateStr === 'No Date' || dateStr === 'Ongoing') return true; // Keep active stuff?
+            const d = new Date(dateStr);
+            if (isNaN(d.getTime())) return false;
+            
+            const { start, end } = getCycleRange(offset);
+            return d >= start && d < end;
+        }
+
         // --- Init ---
         function renderBoard() {
             // Clear cols
             Object.values(columns).forEach(col => col.innerHTML = '');
             
+            const filter = document.getElementById('weekFilter').value;
+            
             // Render Tasks
             tasks.forEach(task => {
-                const card = createTaskElement(task);
-                if(columns[task.status]) {
-                    columns[task.status].appendChild(card);
-                } else {
-                    // Fallback for old data or unmapped status
-                    columns['backlog'].appendChild(card);
+                // Filter Logic
+                let visible = true;
+                if (filter === 'this_week') {
+                    visible = isDateInCycle(task.date, 0);
+                } else if (filter === 'next_week') {
+                    visible = isDateInCycle(task.date, 1);
+                }
+                
+                // Allow "Ongoing" or Active status to bypass filter? 
+                // User: "backlog akan dimulai per week". Active tasks usually persist until done.
+                // Let's assume Active tasks (non-backlog) should probably stick around?
+                // But user wants "Weekly Prioritization".
+                // Let's stick to strict date filtering for now, or ensure tasks have updated dates.
+                
+                if (visible) {
+                    const card = createTaskElement(task);
+                    if(columns[task.status]) {
+                        columns[task.status].appendChild(card);
+                    } else {
+                        columns['backlog'].appendChild(card);
+                    }
                 }
             });
 
@@ -803,33 +857,72 @@
             div.querySelector('input[type="text"]').focus();
         }
 
-        function handleAddTask(e) {
+        async function handleAddTask(e) {
             e.preventDefault();
             const form = e.target;
+            const submitBtn = form.querySelector('button[type="submit"]');
             
-            // Collect Subtasks
-            const subtaskInputs = form.querySelectorAll('input[name="subtask[]"]');
-            const subtasks = Array.from(subtaskInputs)
-                .map(input => input.value.trim())
-                .filter(val => val !== '')
-                .map(text => ({ text: text, done: false }));
+            // UI Feedback
+            const originalText = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = 'Adding...';
 
-            const newTask = {
-                id: Date.now().toString(),
-                title: document.getElementById('taskTitle').value,
-                tag: document.getElementById('taskTag').value,
-                priority: form.querySelector('input[name="priority"]:checked').value,
-                date: document.getElementById('taskDate').value || 'No Date',
-                status: 'backlog',
-                subtasks: subtasks
-            };
-            
-            tasks.push(newTask);
-            saveTasks(); // Persist
-            renderBoard();
-            toggleModal();
-            form.reset();
-            document.getElementById('subtasks-container').innerHTML = '';
+            try {
+                // Get Form Data
+                const title = document.getElementById('taskTitle').value;
+                const category = document.getElementById('taskTag').value;
+                const date = document.getElementById('taskDate').value || new Date().toISOString();
+                const priority = form.querySelector('input[name="priority"]:checked').value;
+                
+                // Get Current User
+                const user = JSON.parse(localStorage.getItem('kalananti_user') || '{}');
+                const isMember = user.role !== 'Team Lead'; 
+
+                // Construct Params
+                const params = {
+                    title: title,
+                    category: category,
+                    date: date,
+                    priority: priority,
+                    user: user.name || 'Unknown',
+                    isUrgent: isMember ? 'true' : 'false' // Members force to To-Do
+                };
+
+                console.log('Sending Task:', params);
+
+                if (API_URL !== 'YOUR_WEB_APP_URL_HERE') {
+                    const res = await fetchFromGas('addTask', params);
+                    if (res.success) {
+                        form.reset();
+                        toggleModal();
+                        loadData(); // Reload to see new task
+                    } else {
+                        throw new Error(res.error || 'Server Error');
+                    }
+                } else {
+                    // Local Fallback
+                     tasks.push({
+                        id: Date.now().toString(),
+                        title: category ? `[${category}] ${title}` : title,
+                        tag: category,
+                        priority: priority,
+                        date: date,
+                        status: isMember ? 'todo' : 'backlog',
+                        approved: false
+                    });
+                    renderBoard();
+                    toggleModal();
+                    form.reset();
+                }
+
+            } catch (err) {
+                console.error(err);
+                alert('Error adding task: ' + err.message);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+                document.getElementById('subtasks-container').innerHTML = ''; // Clear Subtasks
+            }
         }
 
         function toggleSubtask(taskId, subtaskIdx) {
@@ -896,6 +989,39 @@
             div.addEventListener('dragend', dragEnd);
 
             return div;
+        }
+
+        function approveTask(id, checkbox) {
+            if (API_URL !== 'YOUR_WEB_APP_URL_HERE') {
+                checkbox.disabled = true;
+                console.log('Approving Task:', id);
+                
+                fetchFromGas('approveTask', { id: id })
+                    .then(res => {
+                        if (res.success) {
+                            loadData(); // Sync to see it move to To Do
+                        } else {
+                            alert('Approval failed: ' + res.error);
+                            checkbox.checked = !checkbox.checked; // Revert
+                            checkbox.disabled = false;
+                        }
+                    })
+                    .catch(err => {
+                        console.error(err);
+                        alert('Connection Error');
+                        checkbox.checked = !checkbox.checked; // Revert
+                        checkbox.disabled = false;
+                    });
+            } else {
+                console.log('Local Approve:', id);
+                const t = tasks.find(t => t.id === id);
+                if (t) {
+                    t.approved = true;
+                    // Mock Move
+                    t.status = 'todo';
+                    renderBoard();
+                }
+            }
         }
 
         function updateCounts() {
