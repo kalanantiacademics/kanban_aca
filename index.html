@@ -488,13 +488,21 @@
         // --- API CONFIGURATION ---
         const API_URL = 'https://script.google.com/macros/s/AKfycbwbVOGWF7uVnhTxtKPDcPP3uqDq3vmbaPnZDCxCam3JJQ7b5-HljdHCOxvkBQj3jVo9_A/exec';
 
-        async function fetchFromGas(action, params = {}) {
+        async function fetchFromGas(action, params = {}, method = 'GET') {
             const url = new URL(API_URL);
             url.searchParams.append('action', action);
             Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
 
+            const options = {
+                method: method
+            };
+            
+            // For GAS doPost, passing params in URL is supported and easiest given current Code.gs
+            // If we needed body, we'd add body: JSON.stringify(params) and change headers.
+            // But checking Code.gs, it uses e.parameter which captures URL params even on POST.
+
             try {
-                const response = await fetch(url.toString());
+                const response = await fetch(url.toString(), options);
                 const data = await response.json();
                 return data;
             } catch (error) {
@@ -821,6 +829,7 @@
                     if (item && item.length > 0) {
                         tasks = item;
                         localStorage.setItem('kanban-tasks-v2', JSON.stringify(tasks));
+                        isFilterPopulated = false; // Reset filter populate
                         renderBoard();
                         renderDashboard();
                     } else {
@@ -895,7 +904,8 @@
                 console.log('Sending Task:', params);
 
                 if (API_URL !== 'YOUR_WEB_APP_URL_HERE') {
-                    const res = await fetchFromGas('addTask', params);
+                    // Use POST for Write Action
+                    const res = await fetchFromGas('addTask', params, 'POST');
                     if (res.success) {
                         form.reset();
                         toggleModal();
@@ -1000,7 +1010,7 @@
                 checkbox.disabled = true;
                 console.log('Approving Task:', id);
                 
-                fetchFromGas('approveTask', { id: id })
+                fetchFromGas('approveTask', { id: id }, 'POST')
                     .then(res => {
                         if (res.success) {
                             loadData(); // Sync to see it move to To Do
