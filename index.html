@@ -762,7 +762,9 @@
         }
 
         // Initialize
-        loadData(); 
+        checkSession();
+        // Note: loadData is called inside checkSession if logged in. 
+        // If not logged in, we don't load data until login success. 
 
         // --- Subtask Logic ---
         function addSubtaskInput() {
