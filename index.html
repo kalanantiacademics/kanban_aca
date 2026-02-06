@@ -472,6 +472,24 @@
     </div>
 
     <script>
+        // --- API CONFIGURATION ---
+        const API_URL = 'https://script.google.com/macros/s/AKfycbwbVOGWF7uVnhTxtKPDcPP3uqDq3vmbaPnZDCxCam3JJQ7b5-HljdHCOxvkBQj3jVo9_A/exec';
+
+        async function fetchFromGas(action, params = {}) {
+            const url = new URL(API_URL);
+            url.searchParams.append('action', action);
+            Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
+
+            try {
+                const response = await fetch(url.toString());
+                const data = await response.json();
+                return data;
+            } catch (error) {
+                console.error('API Error:', error);
+                throw error;
+            }
+        }
+
         // --- View & Dashboard Logic ---
         function switchView(viewName) {
             const dashView = document.getElementById('view-dashboard');
@@ -610,38 +628,22 @@
             loginBtn.disabled = true;
             loginError.classList.add('hidden');
 
-    // --- API CONFIGURATION ---
-    const API_URL = 'https://script.google.com/macros/s/AKfycbwbVOGWF7uVnhTxtKPDcPP3uqDq3vmbaPnZDCxCam3JJQ7b5-HljdHCOxvkBQj3jVo9_A/exec';
 
-    async function fetchFromGas(action, params = {}) {
-        const url = new URL(API_URL);
-        url.searchParams.append('action', action);
-        Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
-
-        try {
-            const response = await fetch(url.toString());
-            const data = await response.json();
-            return data;
-        } catch (error) {
-            console.error('API Error:', error);
-            throw error;
-        }
-    }
-
-    if (API_URL !== 'YOUR_WEB_APP_URL_HERE') {
-        fetchFromGas('checkLogin', { email: email })
-            .then(response => {
-                if (response.valid) {
-                    localStorage.setItem('kalananti_user', JSON.stringify(response.user));
-                    location.reload(); 
-                } else {
-                    showLoginError(response.message);
-                }
-            })
-            .catch(err => {
-                showLoginError('Connection failed. Please try again.');
-            });
-    } else {
+            // API Logic uses global fetchFromGas
+            if (API_URL && API_URL !== 'YOUR_WEB_APP_URL_HERE') {
+                fetchFromGas('checkLogin', { email: email })
+                    .then(response => {
+                        if (response.valid) {
+                            localStorage.setItem('kalananti_user', JSON.stringify(response.user));
+                            location.reload(); 
+                        } else {
+                            showLoginError(response.message);
+                        }
+                    })
+                    .catch(err => {
+                        showLoginError('Connection failed. Please try again.');
+                    });
+            } else {
         // Fallback or Alert if URL not set
         console.warn('API_URL not set');
          if (typeof google !== 'undefined' && google.script) {
