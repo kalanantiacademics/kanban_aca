@@ -889,6 +889,7 @@
         let currentSidebarFilter = { type: 'all', value: null };
 
         function setFilter(type, value) {
+            console.log('setFilter called:', type, value);
             currentSidebarFilter = { type, value };
             
             // UI Update
