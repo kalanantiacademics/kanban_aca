@@ -394,12 +394,25 @@
                             <label for="taskTitle" class="text-xs font-bold text-gray-500 uppercase tracking-wide">Title</label>
                             <input type="text" id="taskTitle" required class="mt-2 w-full px-4 py-3 rounded-xl bg-gray-50 border-gray-200 focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium text-gray-800 placeholder-gray-400" placeholder="What needs to be done?">
                         </div>
+
+                        <!-- Assignee -->
+                        <div>
+                            <label for="taskPic" class="text-xs font-bold text-gray-500 uppercase tracking-wide">Assignee</label>
+                            <select id="taskPic" class="mt-2 w-full px-4 py-3 rounded-xl bg-gray-50 border-gray-200 focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium text-gray-600">
+                                <option value="">Select Member...</option>
+                                <option value="Laras">Laras</option>
+                                <option value="Yazid">Yazid</option>
+                                <option value="Saras">Saras</option>
+                                <option value="Aisyah">Aisyah</option>
+                                <option value="Galuh">Galuh</option>
+                            </select>
+                        </div>
                         
                         <!-- Tag & Date -->
                         <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <label for="taskTag" class="text-xs font-bold text-gray-500 uppercase tracking-wide">Category</label>
-                                <select id="taskTag" class="mt-2 w-full px-4 py-3 rounded-xl bg-gray-50 border-gray-200 focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium text-gray-600">
+                                <select id="taskTag" onchange="toggleCustomCategory()" class="mt-2 w-full px-4 py-3 rounded-xl bg-gray-50 border-gray-200 focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium text-gray-600">
                                     <option value="UOB">UOB</option>
                                     <option value="MDS">MDS</option>
                                     <option value="B2C">B2C</option>
@@ -408,6 +421,7 @@
                                     <option value="B2G">B2G</option>
                                     <option value="Other">Other</option>
                                 </select>
+                                <input type="text" id="customCategoryInput" class="hidden mt-2 w-full px-4 py-3 rounded-xl bg-gray-50 border-gray-200 focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium text-gray-800 placeholder-gray-400" placeholder="Enter Category Name">
                             </div>
                             <div>
                                 <label for="taskDate" class="text-xs font-bold text-gray-500 uppercase tracking-wide">Due Date</label>
@@ -1024,7 +1038,11 @@
             try {
                 // Get Form Data
                 const title = document.getElementById('taskTitle').value;
-                const category = document.getElementById('taskTag').value;
+                let category = document.getElementById('taskTag').value;
+                if (category === 'Other') {
+                    category = document.getElementById('customCategoryInput').value || 'Other';
+                }
+                const pic = document.getElementById('taskPic').value;
                 const date = document.getElementById('taskDate').value;
                 const priority = form.querySelector('input[name="priority"]:checked').value;
                 const evidence = document.getElementById('taskEvidence').value;
@@ -1037,6 +1055,7 @@
                 const params = {
                     title: title,
                     category: category,
+                    pic: pic,
                     date: date,
                     priority: priority,
                     evidence: evidence, // Send Evidence
@@ -1437,8 +1456,34 @@
             if (!task) return;
 
             editingTaskId = taskId;
+            editingTaskId = taskId;
             document.getElementById('taskTitle').value = task.title.replace(/^\[.*?\]\s/, ''); // Remove tag from title if present
-            document.getElementById('taskTag').value = task.tag || 'Other';
+            
+            // Handle Category
+            const tagSelect = document.getElementById('taskTag');
+            const customInput = document.getElementById('customCategoryInput');
+            
+            // Check if tag exists in options
+            const options = Array.from(tagSelect.options).map(o => o.value);
+            if (options.includes(task.tag)) {
+                tagSelect.value = task.tag;
+                customInput.classList.add('hidden');
+            } else {
+                tagSelect.value = 'Other';
+                customInput.value = task.tag || ''; // If tag is something else (e.g. Innovation), put it here
+                customInput.classList.remove('hidden');
+            }
+
+            // Handle PIC
+            const picSelect = document.getElementById('taskPic');
+            // If task.pic exists, use it. IF not, check if tag matches a user? 
+            if (task.pic) {
+                picSelect.value = task.pic;
+            } else if (['Laras', 'Yazid', 'Saras', 'Aisyah', 'Galuh'].includes(task.tag)) {
+                picSelect.value = task.tag;
+            } else {
+                picSelect.value = '';
+            }
              // Date might be simple string or ISO. If ISO, take first 10 chars.
             if (task.date && task.date.includes('T')) {
                  document.getElementById('taskDate').value = task.date.split('T')[0];
@@ -1466,6 +1511,17 @@
                 toggleModal();
             }
         });
+
+        function toggleCustomCategory() {
+            const val = document.getElementById('taskTag').value;
+            const input = document.getElementById('customCategoryInput');
+            if (val === 'Other') {
+                input.classList.remove('hidden');
+                input.focus();
+            } else {
+                input.classList.add('hidden');
+            }
+        }
 
     </script>
 </body>
