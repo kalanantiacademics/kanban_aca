@@ -957,17 +957,7 @@
                 if(el) el.innerText = counts[key];
             });
         }
-                    if(columns[task.status]) {
-                        columns[task.status].appendChild(card);
-                    } else {
-                        columns['backlog'].appendChild(card);
-                    }
-                }
-            });
 
-            // Update counts
-            updateCounts();
-        }
 
         // --- Data Fetching ---
         function loadData() {
