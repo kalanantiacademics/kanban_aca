@@ -1441,6 +1441,18 @@
             taskModal.classList.toggle('hidden');
             if(!taskModal.classList.contains('hidden')) {
                 document.getElementById('taskTitle').focus();
+                
+                // Auto-Assign Logic
+                const user = JSON.parse(localStorage.getItem('kalananti_user') || '{}');
+                const picSelect = document.getElementById('taskPic');
+                if (user.role !== 'Team Lead' && user.name) {
+                    // Check if user.name exists in options? or just set it.
+                    // Options are: Laras, Yazid, Saras, Aisyah, Galuh
+                    // If user.name matches one of them, it will select.
+                    picSelect.value = user.name;
+                } else {
+                    picSelect.value = ''; // Default to empty for Team Lead
+                }
             } else {
                 // Reset on close
                 editingTaskId = null;
