@@ -1349,6 +1349,8 @@
 
                 if (draggedItem) {
                     const taskId = draggedItem.id;
+                    const task = tasks.find(t => t.id === taskId);
+                    console.log('Drop Debug:', { taskId, newStatus, currentStatus: task?.status });
 
                     // If moving to Review/Done, require evidence
                     if (newStatus === 'review') {
