@@ -519,7 +519,7 @@
         // --- API CONFIGURATION ---
         // Placeholder for GAS Template (ignored if serving static HTML)
         const API_URL_TEMPLATE = '<?= apiUrl ?>'; 
-        const API_URL_FALLBACK = 'https://script.google.com/macros/s/AKfycbyuECetQJVG_pkpZZVylH_feBi69ACoo5Di87jFbmFbqh4_6D-WVj9Bb-FGyVD9crXaaA/exec';
+        const API_URL_FALLBACK = 'https://script.google.com/macros/s/AKfycbzA6yu0fYx0kS8dG03ZVlp0DWA2xILvukxsouGJGGlipdSWW3O9yx4z_u3ErcL8PhgjBQ/exec';
 
         // Logic: If template is not replaced (still contains '<?'), use Fallback
         const EFFECTIVE_API_URL = (!API_URL_TEMPLATE.includes('<?')) ? API_URL_TEMPLATE : API_URL_FALLBACK;
