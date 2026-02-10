@@ -897,6 +897,7 @@
             const clickedBtn = event.currentTarget || event.target.closest('button');
             if(clickedBtn) clickedBtn.classList.add('active', 'bg-blue-50', 'text-blue-600', 'font-bold');
 
+            switchView('kanban'); // Ensure we are on the board view
             renderBoard();
         }
 
@@ -941,8 +942,6 @@
                         if (!task.tag || !task.tag.toLowerCase().includes(currentSidebarFilter.value.toLowerCase())) visible = false;
                     }
                 }
-                
-                console.log('Filter:', task.title, visible);
                 
                 if (visible) {
                     const card = createTaskElement(task);
