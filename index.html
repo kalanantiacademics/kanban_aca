@@ -1259,6 +1259,7 @@
             // Optimistic Update
             const oldStatus = task.status;
             task.status = newStatus;
+            if (evidence) task.evidence = evidence; // Update local evidence
             renderBoard();
 
             try {
