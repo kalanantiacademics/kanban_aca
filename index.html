@@ -1155,6 +1155,8 @@
             console.log('Toggling Task:', id, task);
             if (!task) return;
 
+            console.log('Current Status:', task.status);
+
             // Logic:
             // Backlog -> (Blocked, need Approval)
             // To Do -> Progress
@@ -1171,6 +1173,7 @@
                 // To Do -> Progress
                 updateTaskStatus(id, 'progress');
             } else if (task.status === 'progress') {
+                console.log('Status is progress, opening modal...');
                 // Progress -> Review (Require Evidence)
                 openEvidenceModal(id);
             } else if (task.status === 'review') {
@@ -1221,6 +1224,7 @@
         }
 
         function openEvidenceModal(taskId) {
+            console.log('openEvidenceModal Called for:', taskId);
             document.getElementById('evidenceTaskId').value = taskId;
             document.getElementById('evidenceInput').value = '';
             toggleEvidenceModal();
@@ -1274,15 +1278,20 @@
                 e.preventDefault();
                 column.classList.remove('drag-over');
                 
+                const newStatus = column.getAttribute('data-status');
+                console.log('Dropped into:', newStatus);
+
                 if (draggedItem) {
-                    const newStatus = column.getAttribute('data-status');
                     const taskId = draggedItem.id;
 
                     // If moving to Review/Done, require evidence
                     if (newStatus === 'review') {
+                        console.log('Target is review. Checking requirement...');
                         // Check if it's not already in review?
                         const task = tasks.find(t => t.id === taskId);
+                         console.log('Task status:', task?.status);
                         if (task && task.status !== 'review') {
+                            console.log('Opening Modal from Drop');
                             openEvidenceModal(taskId);
                             return; // Stop immediate drop
                         }
