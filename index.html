@@ -434,6 +434,12 @@
                             </div>
                         </div>
 
+                        <!-- Evidence (Optional) -->
+                        <div id="evidenceFieldWrapper">
+                            <label for="taskEvidence" class="text-xs font-bold text-gray-500 uppercase tracking-wide">Evidence Link</label>
+                            <input type="text" id="taskEvidence" class="mt-2 w-full px-4 py-3 rounded-xl bg-gray-50 border-gray-200 focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium text-gray-800 placeholder-gray-400" placeholder="https://...">
+                        </div>
+
                         <!-- Subtasks Feature -->
                         <div>
                             <label class="text-xs font-bold text-gray-500 uppercase tracking-wide flex justify-between items-center mb-2">
@@ -991,7 +997,8 @@
                 const category = document.getElementById('taskTag').value;
                 const date = document.getElementById('taskDate').value;
                 const priority = form.querySelector('input[name="priority"]:checked').value;
-                
+                const evidence = document.getElementById('taskEvidence').value;
+
                 // Get Current User
                 const user = JSON.parse(localStorage.getItem('kalananti_user') || '{}');
                 const isMember = user.role !== 'Team Lead'; 
@@ -1002,6 +1009,7 @@
                     category: category,
                     date: date,
                     priority: priority,
+                    evidence: evidence, // Send Evidence
                     user: user.name || 'Unknown',
                     isUrgent: isMember ? 'true' : 'false' // Members force to To-Do/Urgent logic? Or just Backlog?
                     // Original code had logic. I will preserve it.
@@ -1023,13 +1031,14 @@
                             throw new Error(res.error || 'Edit Failed');
                         }
                      } else {
-                        // Local Mock
+                         // Local Mock
                          const t = tasks.find(x => x.id === editingTaskId);
                          if(t) {
                              t.title = category ? `[${category}] ${title}` : title;
                              t.tag = category;
                              t.priority = priority;
                              t.date = date;
+                             t.evidence = evidence;
                              // t.user = ?
                          }
                          renderBoard();
@@ -1056,6 +1065,7 @@
                             tag: category,
                             priority: priority,
                             date: date,
+                            evidence: evidence,
                             status: isMember ? 'todo' : 'backlog',
                             approved: false
                         });
@@ -1120,11 +1130,18 @@
                             </div>
                         </div>
 
-                        ${task.evidence ? `
-                        <div class="mb-3 p-2 bg-blue-50 border border-blue-100 rounded-lg text-xs text-blue-800 break-words">
-                            <span class="font-bold">Evidence:</span> ${task.evidence}
-                        </div>
-                        ` : ''}
+                        ${task.evidence ? (() => {
+                            const evidenceText = task.evidence;
+                            const isUrl = evidenceText.startsWith('http') || evidenceText.startsWith('www');
+                            const displayContent = isUrl 
+                                ? `<a href="${evidenceText}" target="_blank" class="underline hover:text-blue-600" onclick="event.stopPropagation()">${evidenceText}</a>`
+                                : evidenceText;
+                            
+                            return `
+                            <div class="mb-3 p-2 bg-blue-50 border border-blue-100 rounded-lg text-xs text-blue-800 break-words">
+                                <span class="font-bold">Evidence:</span> ${displayContent}
+                            </div>`;
+                        })() : ''}
 
                         <div class="flex items-center gap-2">
                             ${priorityBadge}
@@ -1368,6 +1385,7 @@
                 // Reset on close
                 editingTaskId = null;
                 document.getElementById('taskForm').reset();
+                document.getElementById('taskEvidence').value = ''; 
                 document.querySelector('#taskModal h3').innerText = 'New Task';
                 document.querySelector('#taskModal button[type="submit"]').innerText = 'Create Task';
             }
@@ -1390,6 +1408,9 @@
             // Priority
             const radio = document.querySelector(`input[name="priority"][value="${task.priority}"]`);
             if (radio) radio.checked = true;
+
+            // Evidence
+            document.getElementById('taskEvidence').value = task.evidence || '';
 
             document.querySelector('#taskModal h3').innerText = 'Edit Task';
             document.querySelector('#taskModal button[type="submit"]').innerText = 'Update Task';
