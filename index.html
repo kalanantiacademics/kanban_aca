@@ -122,16 +122,16 @@
             <div>
                 <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 px-3">Projects</h3>
                 <div class="space-y-1">
-                    <button class="w-full sidebar-item flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-gray-600 hover:bg-gray-50 transition-all">
+                    <button onclick="setFilter('user', 'UOB')" class="w-full sidebar-item flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-gray-600 hover:bg-gray-50 transition-all">
                         <span class="w-2 h-2 rounded-full bg-blue-500"></span> UOB
                     </button>
-                    <button class="w-full sidebar-item flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-gray-600 hover:bg-gray-50 transition-all">
+                    <button onclick="setFilter('user', 'B2B')" class="w-full sidebar-item flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-gray-600 hover:bg-gray-50 transition-all">
                         <span class="w-2 h-2 rounded-full bg-purple-500"></span> B2B
                     </button>
-                    <button class="w-full sidebar-item flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-gray-600 hover:bg-gray-50 transition-all">
+                    <button onclick="setFilter('user', 'B2C')" class="w-full sidebar-item flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-gray-600 hover:bg-gray-50 transition-all">
                         <span class="w-2 h-2 rounded-full bg-orange-500"></span> B2C
                     </button>
-                    <button class="w-full sidebar-item flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-gray-600 hover:bg-gray-50 transition-all">
+                    <button onclick="setFilter('user', 'B2S')" class="w-full sidebar-item flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-gray-600 hover:bg-gray-50 transition-all">
                         <span class="w-2 h-2 rounded-full bg-green-500"></span> B2S
                     </button>
                 </div>
@@ -141,15 +141,15 @@
             <div>
                 <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 px-3">Filters</h3>
                 <div class="space-y-1">
-                    <button class="w-full sidebar-item flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-gray-600 hover:bg-gray-50 transition-all">
+                    <button onclick="setFilter('status', 'complete')" class="w-full sidebar-item flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-gray-600 hover:bg-gray-50 transition-all">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
                         All Done
                     </button>
-                    <button class="w-full sidebar-item flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-gray-600 hover:bg-gray-50 transition-all">
+                    <button onclick="setFilter('status', 'backlog')" class="w-full sidebar-item flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-gray-600 hover:bg-gray-50 transition-all">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                         All Backlog
                     </button>
-                    <button class="w-full sidebar-item flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-gray-600 hover:bg-gray-50 transition-all">
+                    <button onclick="setFilter('status', 'todo')" class="w-full sidebar-item flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-gray-600 hover:bg-gray-50 transition-all">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
                         All To Do
                     </button>
@@ -160,23 +160,23 @@
             <div id="team-section" class="hidden">
                 <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 px-3">Team Performance</h3>
                 <div class="space-y-1">
-                     <button class="w-full sidebar-item flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-gray-600 hover:bg-gray-50 transition-all">
+                     <button onclick="setFilter('user', 'Laras')" class="w-full sidebar-item flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-gray-600 hover:bg-gray-50 transition-all">
                         <span class="w-6 h-6 rounded-full bg-blue-100 text-blue-600 text-xs flex items-center justify-center font-bold">L</span>
                         <span>Laras</span>
                     </button>
-                     <button class="w-full sidebar-item flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-gray-600 hover:bg-gray-50 transition-all">
+                     <button onclick="setFilter('user', 'Yazid')" class="w-full sidebar-item flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-gray-600 hover:bg-gray-50 transition-all">
                         <span class="w-6 h-6 rounded-full bg-purple-100 text-purple-600 text-xs flex items-center justify-center font-bold">Y</span>
                         <span>Yazid</span>
                     </button>
-                     <button class="w-full sidebar-item flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-gray-600 hover:bg-gray-50 transition-all">
+                     <button onclick="setFilter('user', 'Saras')" class="w-full sidebar-item flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-gray-600 hover:bg-gray-50 transition-all">
                         <span class="w-6 h-6 rounded-full bg-green-100 text-green-600 text-xs flex items-center justify-center font-bold">S</span>
                         <span>Saras</span>
                     </button>
-                    <button class="w-full sidebar-item flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-gray-600 hover:bg-gray-50 transition-all">
+                    <button onclick="setFilter('user', 'Aisyah')" class="w-full sidebar-item flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-gray-600 hover:bg-gray-50 transition-all">
                         <span class="w-6 h-6 rounded-full bg-pink-100 text-pink-600 text-xs flex items-center justify-center font-bold">A</span>
                         <span>Aisyah</span>
                     </button>
-                    <button class="w-full sidebar-item flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-gray-600 hover:bg-gray-50 transition-all">
+                    <button onclick="setFilter('user', 'Galuh')" class="w-full sidebar-item flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-gray-600 hover:bg-gray-50 transition-all">
                         <span class="w-6 h-6 rounded-full bg-orange-100 text-orange-600 text-xs flex items-center justify-center font-bold">G</span>
                         <span>Galuh</span>
                     </button>
@@ -935,15 +935,14 @@
                 // 2. Sidebar Filter (AND logic)
                 if (visible) {
                     if (currentSidebarFilter.type === 'status') {
-                        if (currentSidebarFilter.value === 'backlog' && task.status !== 'backlog') visible = false;
-                        if (currentSidebarFilter.value === 'todo' && task.status !== 'todo') visible = false;
+                        if (currentSidebarFilter.value !== 'all' && task.status !== currentSidebarFilter.value) visible = false;
                     } 
                     else if (currentSidebarFilter.type === 'user') {
                         if (!task.tag || !task.tag.toLowerCase().includes(currentSidebarFilter.value.toLowerCase())) visible = false;
                     }
                 }
                 
-                // console.log('Filter:', task.title, visible);
+                console.log('Filter:', task.title, visible);
                 
                 if (visible) {
                     const card = createTaskElement(task);
