@@ -983,13 +983,13 @@
             // UI Feedback
             const originalText = submitBtn.innerHTML;
             submitBtn.disabled = true;
-            submitBtn.innerHTML = 'Adding...';
+            submitBtn.innerHTML = editingTaskId ? 'Updating...' : 'Adding...';
 
             try {
                 // Get Form Data
                 const title = document.getElementById('taskTitle').value;
                 const category = document.getElementById('taskTag').value;
-                const date = document.getElementById('taskDate').value || new Date().toISOString();
+                const date = document.getElementById('taskDate').value;
                 const priority = form.querySelector('input[name="priority"]:checked').value;
                 
                 // Get Current User
@@ -1003,40 +1003,71 @@
                     date: date,
                     priority: priority,
                     user: user.name || 'Unknown',
-                    isUrgent: isMember ? 'true' : 'false' // Members force to To-Do
+                    isUrgent: isMember ? 'true' : 'false' // Members force to To-Do/Urgent logic? Or just Backlog?
+                    // Original code had logic. I will preserve it.
                 };
 
                 console.log('Sending Task:', params);
 
-                if (API_URL !== 'YOUR_WEB_APP_URL_HERE') {
-                    // Use POST for Write Action
-                    const res = await fetchFromGas('addTask', params, 'POST');
-                    if (res.success) {
-                        form.reset();
-                        toggleModal();
-                        loadData(); // Reload to see new task
-                    } else {
-                        throw new Error(res.error || 'Server Error');
-                    }
+                if (editingTaskId) {
+                     // EDIT MODE
+                     params.id = editingTaskId;
+                     // params.action = 'editTask'; // Handled by fetchFromGas name
+                     
+                     if (API_URL !== 'YOUR_WEB_APP_URL_HERE') {
+                        const res = await fetchFromGas('editTask', params, 'POST'); // Use GET
+                        if (res.success) {
+                            toggleModal(); // Resets editingTaskId
+                            loadData(); 
+                        } else {
+                            throw new Error(res.error || 'Edit Failed');
+                        }
+                     } else {
+                        // Local Mock
+                         const t = tasks.find(x => x.id === editingTaskId);
+                         if(t) {
+                             t.title = category ? `[${category}] ${title}` : title;
+                             t.tag = category;
+                             t.priority = priority;
+                             t.date = date;
+                             // t.user = ?
+                         }
+                         renderBoard();
+                         toggleModal();
+                     }
+
                 } else {
-                    // Local Fallback
-                     tasks.push({
-                        id: Date.now().toString(),
-                        title: category ? `[${category}] ${title}` : title,
-                        tag: category,
-                        priority: priority,
-                        date: date,
-                        status: isMember ? 'todo' : 'backlog',
-                        approved: false
-                    });
-                    renderBoard();
-                    toggleModal();
-                    form.reset();
+                    // CREATE MODE
+                    if (API_URL !== 'YOUR_WEB_APP_URL_HERE') {
+                        // Use POST for Write Action (Actually GET per recent fix)
+                        const res = await fetchFromGas('addTask', params, 'POST'); 
+                        if (res.success) {
+                            form.reset();
+                            toggleModal();
+                            loadData(); // Reload to see new task
+                        } else {
+                            throw new Error(res.error || 'Server Error');
+                        }
+                    } else {
+                        // Local Fallback
+                         tasks.push({
+                            id: Date.now().toString(),
+                            title: category ? `[${category}] ${title}` : title,
+                            tag: category,
+                            priority: priority,
+                            date: date,
+                            status: isMember ? 'todo' : 'backlog',
+                            approved: false
+                        });
+                        renderBoard();
+                        toggleModal();
+                        form.reset();
+                    }
                 }
 
             } catch (err) {
                 console.error(err);
-                alert('Error adding task: ' + err.message);
+                alert('Error: ' + err.message);
             } finally {
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = originalText;
@@ -1089,17 +1120,33 @@
                             </div>
                         </div>
 
+                        ${task.evidence ? `
+                        <div class="mb-3 p-2 bg-blue-50 border border-blue-100 rounded-lg text-xs text-blue-800 break-words">
+                            <span class="font-bold">Evidence:</span> ${task.evidence}
+                        </div>
+                        ` : ''}
+
                         <div class="flex items-center gap-2">
                             ${priorityBadge}
                             <span class="px-2 py-1 rounded-md ${tagColor} text-xs font-bold truncate max-w-[100px]">${task.tag}</span>
                         </div>
                     </div>
                     
-                    <button onclick="deleteTask(event, '${task.id}')" class="text-gray-300 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                    </button>
+                    <div class="flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                         ${task.status !== 'complete' ? `
+                        <button onclick="event.stopPropagation(); openEditModal('${task.id}')" class="text-gray-300 hover:text-blue-500" title="Edit">
+                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                        </button>
+                        ` : ''}
+                        
+                        <button onclick="deleteTask(event, '${task.id}')" class="text-gray-300 hover:text-red-400" title="Delete">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                        </button>
+                    </div>
                 </div>
             `;
 
@@ -1311,35 +1358,46 @@
         });
 
         // --- Actions ---
+        let editingTaskId = null;
+
         function toggleModal() {
             taskModal.classList.toggle('hidden');
             if(!taskModal.classList.contains('hidden')) {
                 document.getElementById('taskTitle').focus();
+            } else {
+                // Reset on close
+                editingTaskId = null;
+                document.getElementById('taskForm').reset();
+                document.querySelector('#taskModal h3').innerText = 'New Task';
+                document.querySelector('#taskModal button[type="submit"]').innerText = 'Create Task';
             }
         }
 
-        function addTask(e) {
-            e.preventDefault();
-            const title = document.getElementById('taskTitle').value;
-            const tag = document.getElementById('taskTag').value;
-            const priority = document.querySelector('input[name="priority"]:checked').value;
-            const dateInput = document.getElementById('taskDate').value;
+        function openEditModal(taskId) {
+            const task = tasks.find(t => t.id === taskId);
+            if (!task) return;
 
-            const newTask = {
-                id: Date.now().toString(),
-                title,
-                tag,
-                priority,
-                date: dateInput || 'No Date',
-                time: '',
-                status: 'backlog'
-            };
+            editingTaskId = taskId;
+            document.getElementById('taskTitle').value = task.title.replace(/^\[.*?\]\s/, ''); // Remove tag from title if present
+            document.getElementById('taskTag').value = task.tag || 'Other';
+             // Date might be simple string or ISO. If ISO, take first 10 chars.
+            if (task.date && task.date.includes('T')) {
+                 document.getElementById('taskDate').value = task.date.split('T')[0];
+            } else {
+                 document.getElementById('taskDate').value = task.date;
+            }
+            
+            // Priority
+            const radio = document.querySelector(`input[name="priority"][value="${task.priority}"]`);
+            if (radio) radio.checked = true;
 
-            tasks.push(newTask);
-            renderBoard();
-            toggleModal();
-            document.getElementById('taskForm').reset();
+            document.querySelector('#taskModal h3').innerText = 'Edit Task';
+            document.querySelector('#taskModal button[type="submit"]').innerText = 'Update Task';
+            
+            taskModal.classList.remove('hidden');
         }
+
+
 
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape' && !taskModal.classList.contains('hidden')) {
