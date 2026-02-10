@@ -526,26 +526,49 @@
         const API_URL = EFFECTIVE_API_URL; // Alias for backward compatibility
 
         async function fetchFromGas(action, params = {}, method = 'GET') {
-            const url = new URL(EFFECTIVE_API_URL);
-            url.searchParams.append('action', action);
-            Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
+            return new Promise((resolve, reject) => {
+                if (typeof google === 'undefined' || !google.script) {
+                    // Fallback for Local Dev / GitHub Pages (CORS might fail, but logic remains)
+                    console.warn('Google Script Run not available, falling back to Fetch for:', action);
+                    // Legacy Fetch Logic (Kept for reference or mixed usage)
+                    const url = new URL(EFFECTIVE_API_URL);
+                    url.searchParams.append('action', action);
+                    Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
+                    
+                    fetch(url.toString(), { method: method })
+                        .then(res => res.json())
+                        .then(data => resolve(data))
+                        .catch(err => reject(err));
+                    return;
+                }
 
-            const options = {
-                method: method
-            };
-            
-            // For GAS doPost, passing params in URL is supported and easiest given current Code.gs
-            // If we needed body, we'd add body: JSON.stringify(params) and change headers.
-            // But checking Code.gs, it uses e.parameter which captures URL params even on POST.
+                // Map 'action' string to function name in Code.gs
+                // We created specific wrappers: api_addTask, api_updateStatus, api_approveTask
+                let run = google.script.run
+                    .withSuccessHandler(response => resolve(response))
+                    .withFailureHandler(error => reject(error));
 
-            try {
-                const response = await fetch(url.toString(), options);
-                const data = await response.json();
-                return data;
-            } catch (error) {
-                console.error('API Error:', error);
-                throw error;
-            }
+                // Route to correct server-function
+                switch(action) {
+                    case 'getKanbanData':
+                        run.getKanbanData();
+                        break;
+                    case 'checkLogin':
+                        run.api_checkLogin(params.email || params);
+                        break;
+                    case 'addTask':
+                        run.api_addTask(params);
+                        break;
+                    case 'updateStatus':
+                        run.api_updateStatus(params);
+                        break;
+                    case 'approveTask':
+                        run.api_approveTask(params);
+                        break;
+                    default:
+                        reject("Unknown Action: " + action);
+                }
+            });
         }
 
         // --- View & Dashboard Logic ---
