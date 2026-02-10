@@ -1291,6 +1291,14 @@
 
         function openEvidenceModal(taskId) {
             console.log('openEvidenceModal Called for:', taskId);
+            const task = tasks.find(t => t.id === taskId);
+            
+            // Safety Check: Don't open if already in Review or Complete
+            if (task && (task.status === 'review' || task.status === 'complete')) {
+                 console.log('Task already review/complete. Skipping modal.');
+                 return;
+            }
+
             document.getElementById('evidenceTaskId').value = taskId;
             document.getElementById('evidenceInput').value = '';
             toggleEvidenceModal();
