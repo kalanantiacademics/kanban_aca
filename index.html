@@ -529,13 +529,13 @@
             return new Promise((resolve, reject) => {
                 if (typeof google === 'undefined' || !google.script) {
                     // Fallback for Local Dev / GitHub Pages (CORS might fail, but logic remains)
-                    console.warn('Google Script Run not available, falling back to Fetch for:', action);
-                    // Legacy Fetch Logic (Kept for reference or mixed usage)
+                    // console.warn('Google Script Run not available, falling back to Fetch for:', action);
+                    // Legacy Fetch Logic: ALWAYS USE GET to avoid CORS preflight issues with GAS
                     const url = new URL(EFFECTIVE_API_URL);
                     url.searchParams.append('action', action);
                     Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
                     
-                    fetch(url.toString(), { method: method })
+                    fetch(url.toString(), { method: 'GET' })
                         .then(res => res.json())
                         .then(data => resolve(data))
                         .catch(err => reject(err));
