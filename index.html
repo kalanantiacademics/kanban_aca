@@ -886,6 +886,18 @@
         }
 
         let isFilterPopulated = false;
+        let currentSidebarFilter = { type: 'all', value: null };
+
+        function setFilter(type, value) {
+            currentSidebarFilter = { type, value };
+            
+            // UI Update
+            document.querySelectorAll('.sidebar-item').forEach(el => el.classList.remove('active', 'bg-blue-50', 'text-blue-600', 'font-bold'));
+            const clickedBtn = event.currentTarget || event.target.closest('button');
+            if(clickedBtn) clickedBtn.classList.add('active', 'bg-blue-50', 'text-blue-600', 'font-bold');
+
+            renderBoard();
+        }
 
         function renderBoard() {
              // Populate Filters unique to data
@@ -898,26 +910,53 @@
             Object.values(columns).forEach(col => col.innerHTML = '');
             
             const filterEl = document.getElementById('weekFilter');
-            const filter = filterEl ? filterEl.value : 'all'; 
+            const weekFilter = filterEl ? filterEl.value : 'all'; 
             
+            // Counters
+            const counts = { backlog: 0, todo: 0, progress: 0, review: 0, complete: 0 };
+
             // Render Tasks
             tasks.forEach(task => {
                 // Filter Logic
                 let visible = true;
                 
-                if (filter === 'all') {
+                // 1. Week/Period Filter
+                if (weekFilter === 'all') {
                     visible = true;
-                } else if (filter === 'this_week') {
+                } else if (weekFilter === 'this_week') {
                     visible = isDateInCycle(task.date, 0);
-                } else if (filter === 'next_week') {
+                } else if (weekFilter === 'next_week') {
                     visible = isDateInCycle(task.date, 1);
                 } else {
-                    // Period Filter
-                    visible = task.period === filter;
+                    visible = task.period === weekFilter;
+                }
+
+                // 2. Sidebar Filter (AND logic)
+                if (visible) {
+                    if (currentSidebarFilter.type === 'status') {
+                        if (currentSidebarFilter.value === 'backlog' && task.status !== 'backlog') visible = false;
+                        if (currentSidebarFilter.value === 'todo' && task.status !== 'todo') visible = false;
+                    } 
+                    else if (currentSidebarFilter.type === 'user') {
+                        if (!task.tag || !task.tag.toLowerCase().includes(currentSidebarFilter.value.toLowerCase())) visible = false;
+                    }
                 }
                 
                 if (visible) {
                     const card = createTaskElement(task);
+                    if(columns[task.status]) {
+                        columns[task.status].appendChild(card);
+                        counts[task.status]++;
+                    }
+                }
+            });
+
+            // Update Counts
+            Object.keys(counts).forEach(key => {
+                const el = document.getElementById(`count-${key}`);
+                if(el) el.innerText = counts[key];
+            });
+        }
                     if(columns[task.status]) {
                         columns[task.status].appendChild(card);
                     } else {
