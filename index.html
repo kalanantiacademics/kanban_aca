@@ -1099,7 +1099,9 @@
                     if (API_URL !== 'YOUR_WEB_APP_URL_HERE') {
                         // Use POST for Write Action (Actually GET per recent fix)
                         const res = await fetchFromGas('addTask', params, 'POST'); 
+                        console.log('Add Task Response:', res); // DEBUG LOG
                         if (res.success) {
+                            alert(`Task Added at Row: ${res.row} (v${res.version})`); // VISIBLE DEBUG
                             form.reset();
                             toggleModal();
                             loadData(); // Reload to see new task
